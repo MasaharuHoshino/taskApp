@@ -12,7 +12,8 @@ import UserNotifications
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     @IBOutlet weak var tableView: UITableView!
-    
+    @IBOutlet weak var categorySearchTextField: UITextField!
+    @IBOutlet weak var searchButton: UIButton!
     // Realmインスタンスを取得する
     let realm = try! Realm()
     
@@ -88,6 +89,30 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }
             }
         }
+    }
+    
+    @IBAction func searchByCategory(_ sender: Any) {
+        // 検索ボタン押下で、テキストフィールドに入力されたカテゴリでデータをフィルタリング
+        self.taskArray = realm.objects(Task.self).filter("category == %@", self.categorySearchTextField.text!)
+        
+        if self.taskArray.count == 0 {  // 検索結果が0件の場合
+            // プレースホルダーのテキストを3秒間だけ変更するためのタイマー作成、始動
+            Timer.scheduledTimer(timeInterval: 3.0, target: self, selector: #selector(placeholderTimer(_:)), userInfo: nil, repeats: false)
+            // テキストフィールドのテキストを消す
+            self.categorySearchTextField.text = ""
+            // プレースホルダーのテキスト変更
+            self.categorySearchTextField.attributedPlaceholder = NSAttributedString(string: "そんなカテゴリは無いです", attributes: [NSAttributedString.Key.foregroundColor: UIColor.red])
+            
+            // データを検索前の状態に戻す
+            self.taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: true)
+        }
+        // テーブルの再描画
+        self.tableView.reloadData()
+    }
+    
+    // プレースホルダーのテキストを元に戻す関数
+    @objc func placeholderTimer(_ timer: Timer) {
+        self.categorySearchTextField.attributedPlaceholder = NSAttributedString(string: "カテゴリーで検索", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])
     }
     
     // segueで画面遷移する時に呼ばれる
